@@ -52,13 +52,17 @@ class UpdateInfo(object):
             raise errors.IncorrectRequestData()
 
     def validate_updated_info(self, dic):
+        print "check"
         for key in dic:
             if key not in user_info.user_info_structure:
                 raise errors.IncorrectRequestData()
             if key in user_info.USER_INFO_VAL_OBJECT_KEYS:
-                for nested_key in key:
+                for nested_key in dic[key]:
                     if nested_key not in user_info.value_object:
+                        logger.error("Incorrect update info request data.")
+                        logger.error("Invalid key : %s", nested_key)
                         raise errors.IncorrectRequestData()
+        logger.info("Update info object validated for user %s", current_user.get_id())
         return
 
     def get(self):

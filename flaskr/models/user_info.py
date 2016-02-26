@@ -1,15 +1,15 @@
 value_object = {
     "unit": None,
     "value": None,
-    "value_type": None  # For eg: "String", "Int", "Array"
+    "value_type": None
 }
 
 LOCATION_OBJECT = {
-    'longitude': None,
-    'latitude': None,
-    'country': None,
-    'city': None,
-    'place':None
+    "longitude": None,
+    "latitude": None,
+    "country": None,
+    "city": None,
+    "state": None
 }
 
 NAME = "name"
@@ -39,7 +39,6 @@ user_info_structure = {
     "goal": None,
     "term_accpeptance": None  # Boolean
 }
-
 
 WEIGHT_UNITS = ["pound",
                 "kgs"]
