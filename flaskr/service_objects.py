@@ -13,6 +13,7 @@ import logging
 
 # Globals
 import svc_utils
+from models import user_info
 
 WORD = 'word'
 RAW_DATA = 'raw_data'
@@ -40,18 +41,25 @@ class UpdateInfo(object):
         self.info_dict = None
         try:
             data = inputData["data"]
-            user_weight = data.get('weight', None)
-            user_height = data.get('height', None)
-            user_age = data.get('age', None)
-            info_dict = {}
-            if user_weight: info_dict['weight'] = user_weight
-            if user_height: info_dict['height'] = user_height
-            if user_age: info_dict['age'] = user_age
-            self.info_dict = info_dict
-        except KeyError, err:
+            updated_info = data["user_info"]
+            updated_info = dict((k, v) for k, v in updated_info.iteritems() if v)
+            # Validate info keys in request
+            self.validate_updated_info(updated_info)
+            self.info_dict = updated_info
+        except errors.IncorrectRequestData, err:
             logger.error("Input data does not have correct attributes")
             logger.error("%s", err)
             raise errors.IncorrectRequestData()
+
+    def validate_updated_info(self, dic):
+        for key in dic:
+            if key not in user_info.user_info_structure:
+                raise errors.IncorrectRequestData()
+            if key in user_info.USER_INFO_VAL_OBJECT_KEYS:
+                for nested_key in key:
+                    if nested_key not in user_info.value_object:
+                        raise errors.IncorrectRequestData()
+        return
 
     def get(self):
         """Implements a logic wrapper for extracting tags from raw text"""

@@ -127,10 +127,18 @@ def load_user(userid):
 def update_user_info():
     logger.info("Recieved request for updating user's info by user- %s", current_user.get_id())
     start = time.time()
-    response = UPDATE_INFO_SERV.invoke_insert(request)
-    logger.info("Request evaluation time in seconds: %s", \
+    try:
+        response = UPDATE_INFO_SERV.invoke_insert(request)
+        print "coming here 1"
+    except Exception as e:
+        print "coming here 2"
+        return svc_utils.get_response_from_dict(svc_utils.get_sample_response(True,
+                                                                              e.message,
+                                                                              "Error while updating info",
+                                                                              current_user.get_id()))
+    logger.info("Request evaluation time in seconds: %s",
                 str(time.time() - start))
-    logger.info("Sending a reponse for batch request for raw text")
+    logger.info("Sending a reponse for single request for raw text")
     return response
 
 
