@@ -10,9 +10,11 @@ from pymongo import MongoClient
 
 import errors
 import logging
+from flaskr.static import send_notification
 
 # Globals
 import svc_utils
+from flaskr.static.send_notification import GCMessage
 from models import user_info
 
 WORD = 'word'
@@ -31,11 +33,109 @@ collection = db[COLLECTION]
 logger = logging.getLogger(__name__)
 
 
-class UpdateInfo(object):
-    """Service object for implementing keyword similarity in a single
-       application mode. For a single pair of a keyword and a list of
-       words"""
+class FriendRequestAction(object):
+    def __init__(self, inputData):
+        try:
+            self.action = inputData['action']
+            self.add_friend = inputData['friend_username']
+        except KeyError as e:
+            raise errors.IncorrectRequestData
 
+    def get(self):
+        try:
+            friend_request_sendor = collection.find_one({'username': self.add_friend})
+            if None == friend_request_sendor:
+                logger.error("Given username doesn't exist")
+                raise errors.IncorrectRequestData("Username doesn't exist")
+            else:
+                sent_friend_request = friend_request_sendor['sent_friend_request']
+                if current_user.get_id() in sent_friend_request:
+                    collection.update_one({'username': self.add_friend},
+                                          {'$pull': {'sent_friend_request': current_user.get_id()},
+                                           '$push': {'friends': current_user.get_id()}})
+                    collection.update_one({'username': current_user.get_id()},
+                                          {'$push': {'friends': current_user.get_id()}})
+                    logger.info("Friend request accepted successfully")
+                    doc = collection.find_one({'username': self.add_friend})
+                    if None == doc:
+                        raise errors.IncorrectRequestData
+                    else:
+                        gmc_auth = doc['credentials']['gmc_auth']
+                    data = {
+                        "to": self.add_friend,
+                        "data": {
+                            "message": str(current_user.get_id()) + " accepted your friend request",
+                        }
+                    }
+                    gcmessenger = GCMessage(gmc_auth)
+                    if not gcmessenger.post_request(data):
+                        logger.error("Friend request notification not sent")
+                    return svc_utils.get_response_from_dict(svc_utils.get_sample_response(False,
+                                                                                          None,
+                                                                                          "Added to friends",
+                                                                                          current_user.get_id()))
+                else:
+                    logger.error("Invalid username passed")
+                    return svc_utils.get_response_from_dict(svc_utils.get_sample_response(True,
+                                                                                          "Request not found",
+                                                                                          "Request not found",
+                                                                                          current_user.get_id()))
+        except Exception as e:
+            logger.error("Error while responding to friend request")
+            return errors.SERVER_ERROR
+
+
+class AddFriend(object):
+    def __init__(self, inputData):
+        try:
+            self.add_friend = inputData['friend_username']
+        except KeyError as e:
+            raise errors.IncorrectRequestData
+
+    def get(self):
+        try:
+            friend_to_add = collection.find_one({"username": self.add_friend})
+            if None == friend_to_add:
+                logger.error("Username to be added doesn't exist")
+                raise errors.IncorrectRequestData("Username to be added doesn't exist")
+            else:
+                friend_gmc_auth = friend_to_add['credentials']['gmc_auth']
+            data = {
+                "to": self.add_friend,
+                "data": {
+                    "message": str(current_user.get_id()) + " sent you a friend request",
+                }
+            }
+            gcmessenger = GCMessage(friend_gmc_auth)
+            if gcmessenger.post_request(data):
+                collection.update_one({'username': current_user.get_id()},
+                                      {'$addToSet': {'sent_friend_request': self.add_friend}})
+                return True
+            else:
+                raise errors.SERVER_ERROR("Error in sending friend request")
+        except Exception as e:
+            logger.error("Error while sending friend request")
+            raise errors.SERVER_ERROR("Error while sending friend request")
+
+
+class FriendsFeed(object):
+    def __init__(self, inputData):
+        """Expects input_data to be a map containing required keys."""
+        self.info_dict = None
+        try:
+            data = inputData["data"]
+            updated_info = data["friend_list"]
+            updated_info = dict((k, v) for k, v in updated_info.iteritems() if v)
+            # Validate info keys in request
+            self.validate_updated_info(updated_info)
+            self.info_dict = updated_info
+        except errors.IncorrectRequestData, err:
+            logger.error("Input data does not have correct attributes")
+            logger.error("%s", err)
+            raise errors.IncorrectRequestData()
+
+
+class UpdateInfo(object):
     def __init__(self, inputData):
         """Expects input_data to be a map containing required keys."""
         self.info_dict = None

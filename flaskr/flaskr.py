@@ -129,9 +129,7 @@ def update_user_info():
     start = time.time()
     try:
         response = UPDATE_INFO_SERV.invoke_insert(request)
-        print "coming here 1"
     except Exception as e:
-        print "coming here 2"
         return svc_utils.get_response_from_dict(svc_utils.get_sample_response(True,
                                                                               e.message,
                                                                               "Error while updating info",
@@ -139,6 +137,31 @@ def update_user_info():
     logger.info("Request evaluation time in seconds: %s",
                 str(time.time() - start))
     logger.info("Sending a reponse for single request for raw text")
+    return response
+
+
+@app.route('/personal/friendsFeed', methods=['POST'])
+@login_required
+def get_friends_feed():
+    logger.info("Recieved request for fetching top n friends feed status by user- %s", current_user.get_id())
+
+
+@app.route('/personal/accRejFriendRequest')
+@login_required
+def take_action_friend_request():
+
+
+@app.route('/friend/add', methods=['POST'])
+@login_required
+def add_friend():
+    logger.info("Add friend request")
+    try:
+        response = ADD_FRIEND.invoke_insert(request)
+    except Exception as e:
+        return svc_utils.get_response_from_dict(svc_utils.get_sample_response(True,
+                                                                              e.message,
+                                                                              "Error while sending friend request",
+                                                                              current_user.get_id()))
     return response
 
 
@@ -162,7 +185,13 @@ def configure_logging():
 def register_servlets():
     """Creates instances of different servlet objects"""
     global UPDATE_INFO_SERV
+    global GET_FRIENDS_FEED
+    global ADD_FRIEND
+    global FRIEND_REQUEST_ACTION
     UPDATE_INFO_SERV = communicators.UpdateInfoServlet()
+    GET_FRIENDS_FEED = communicators.FriendsFeedServlet()
+    ADD_FRIEND = communicators.AddFriendServlet()
+    FRIEND_REQUEST_ACTION = communicators.FriendRequestActionServlet()
 
 
 @app.before_first_request
