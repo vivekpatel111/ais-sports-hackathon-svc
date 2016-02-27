@@ -8,6 +8,41 @@ import errors
 import service_objects
 
 
+class UsersListServlet(base_communicator.BaseCommunicator, object):
+    """
+    Servlet
+    """
+
+    def __init__(self):
+        super(UsersListServlet, self).__init__()
+
+    def invoke_fetch(self, request):
+        raise errors.FunctionalityNotImplemented()
+
+    def invoke_insert(self, request):
+        """Corresponds to post method. Gets the actual flask request object in
+         input"""
+        # First fetch input data from the request
+        request_data = super(UsersListServlet,
+                             self).get_request_data(request)
+        # Check auth
+        auth_res = super(UsersListServlet, self).check_auth(request_data,
+                                                            request)
+        if auth_res:
+            # First create a service object for this
+            self_name = self.__class__.__name__
+            class_name = self_name.replace("Servlet", "")
+            svc_obj = getattr(service_objects, class_name)(request_data)
+            handler_inst = handlers.HandlerFactory.get_handler(class_name)
+            res_data = handler_inst.get(svc_obj)
+        else:
+            print "testing"
+            raise errors.CouldNotAuthenticate()
+        # Create response object
+        resp = super(UsersListServlet, self).get_response(res_data)
+        return resp
+
+
 class FriendRequestActionServlet(base_communicator.BaseCommunicator, object):
     """
     Servlet
@@ -27,7 +62,7 @@ class FriendRequestActionServlet(base_communicator.BaseCommunicator, object):
                              self).get_request_data(request)
         # Check auth
         auth_res = super(FriendRequestActionServlet, self).check_auth(request_data,
-                                                            request)
+                                                                      request)
         if auth_res:
             # First create a service object for this
             self_name = self.__class__.__name__
@@ -41,9 +76,6 @@ class FriendRequestActionServlet(base_communicator.BaseCommunicator, object):
         # Create response object
         resp = super(FriendRequestActionServlet, self).get_response(res_data)
         return resp
-
-
-
 
 
 class AddFriendServlet(base_communicator.BaseCommunicator, object):

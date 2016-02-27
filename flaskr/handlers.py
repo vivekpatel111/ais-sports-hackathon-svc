@@ -55,6 +55,15 @@ class FriendRequestAction(Handler, object):
         return result
 
 
+class UsersList(Handler, object):
+    def __init__(self):
+        LOGGER.debug("Initialized UsersList handler")
+
+    def get(self, svc_obj):
+        result = svc_obj.get()
+        return result
+
+
 class HandlerFactory(object):
     def __init__(self):
         pass
@@ -63,7 +72,8 @@ class HandlerFactory(object):
     all_handlers = {
         'update_info': UpdateInfo(),
         'add_friend': AddFriend(),
-        'friend_request_action': FriendRequestAction()
+        'friend_request_action': FriendRequestAction(),
+        'get_users_list': UsersList()
     }
 
     @staticmethod
@@ -74,3 +84,5 @@ class HandlerFactory(object):
             return HandlerFactory.all_handlers['add_friend']
         elif name == 'FriendRequestAction':
             return HandlerFactory.all_handlers['friend_request_action']
+        elif name == 'UsersList':
+            return HandlerFactory.all_handlers['get_users_list']
