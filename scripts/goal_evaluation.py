@@ -1,6 +1,8 @@
+import random
 import numpy as np
 import pandas as pd
 from datetime import datetime, timedelta
+import json
 
 def read_input_data():
     """Converts input csv file to pandas dataframe."""
@@ -132,7 +134,72 @@ def check_goal(ts, date, weekly_goal):
         return "Too easy"
 
 
-def main(date, weekly_goal):
+def get_intensity(goal):
+    """Fetches the intensity associated with a goal, like cycling or running.
+
+    Args:
+        goal: goal provided by the user
+
+    Returns:
+        intensity: RPE, integer 1-10 scale
+    """
+    with open("../data/goal_intensity_mapping.json", "r") as f:
+        data = json.load(f)
+
+    return data[goal]
+
+
+def get_weekly_avg_load(ts, date):
+    """Get the average daily load for the last week.
+
+    Args:
+        ts: time series dataframe
+        date: date on which user entered the goal, usually the previous day
+        data
+
+    Returns:
+        daily avg load for the past week
+    """
+    return ts[ts["date"] == date]["4_week_avg"].values[0]
+
+
+def suggest_exercises(ts, date, weekly_goal, fav_activity):
+    """Suggests a 7-day exercise plan for the user.
+
+    Args:
+        weekly_goal: number of training load equivalent
+        fav_activity: cycling, swimming or running
+
+    Returns:
+        list of dicts containing the activity, day and duration
+    """
+    # strategy: suggest one (or two) days for running or swimming
+    avg_load = get_weekly_avg_load(ts, date)
+    with open("../data/goal_intensity_mapping.json", "r") as f:
+        intensity = json.load(f)
+    activities = intensity.keys()
+    # select a side activity randomly
+    side_activity = random.choice(list(set(activities) - set(fav_activity)))
+    # aim for 10% increase on avg load
+    side_activity_duration = avg_load*1.1/intensity[side_activity]
+    # one day is rest day, ideally the third day
+    regular_activity_load = (weekly_goal - avg_load*1.1)/5
+    # below becomes a suggestion
+    regular_activity_duration = regular_activity_load/intensity[fav_activity]
+    # send the recommendation
+    reco = {
+        "day 1": {"activity": fav_activity, "duration": regular_activity_duration},
+        "day 2": {"activity": side_activity, "duration": side_activity_duration},
+        "day 3": {"activity": fav_activity, "duration": regular_activity_duration},
+        "day 4": {"activity": "rest", "duration": 0},
+        "day 5": {"activity": fav_activity, "duration": regular_activity_duration},
+        "day 6": {"activity": fav_activity, "duration": regular_activity_duration},
+        "day 7": {"activity": fav_activity, "duration": regular_activity_duration},
+    }
+    return reco
+
+
+def test_check_goal(date, weekly_goal):
     """Data ingestion, cleaning, feature engineering and evaluation of weekly
     goal.
 
@@ -151,9 +218,19 @@ def main(date, weekly_goal):
     return check_goal(ts, date, weekly_goal)
 
 
+def test_suggest_exercises(date, weekly_goal, fav_activity):
+    """Test for exercise suggestions."""
+    df = read_input_data()
+    ts = create_time_series(df)
+    ts = feature_engineer(ts, df)
+    return suggest_exercises(ts, date, weekly_goal, fav_activity)
+
+
 if __name__ == "__main__":
     # test main function
     date = datetime.now() - timedelta(days=1)
     date = date.date()
     weekly_goal = 16500
-    print main(date, weekly_goal)
+    fav_activity = "cycling"
+    print test_check_goal(date, weekly_goal)
+    print test_suggest_exercises(date, weekly_goal, fav_activity)
