@@ -3,6 +3,6 @@
     "lch_sim_thresh":1.4,
     "levenshtein_thresh":0.3,
     "directory-path":".",
-    "auth-url" : "http://services.sokrati.com/hadesV2/authorize",
+    "auth-url" : "",
     "auth-enabled" : false
  }

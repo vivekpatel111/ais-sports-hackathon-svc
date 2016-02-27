@@ -161,6 +161,22 @@ def take_action_friend_request():
         )
     return response
 
+@app.route('/personal/GetUsersList', methods=['POST', 'GET'])
+@login_required
+def get_users_list():
+    logger.info("received request")
+
+    try:
+        response = GET_USERS_LIST.invoke_insert(request)
+    except Exception as e:
+        return svc_utils.get_response_from_dict(
+                svc_utils.get_sample_response(True,
+                                              e.message,
+                                              "Error while fetching users list",
+                                              current_user.get_id())
+        )
+    return response
+
 
 @app.route('/friend/add', methods=['POST'])
 @login_required
@@ -199,10 +215,12 @@ def register_servlets():
     global GET_FRIENDS_FEED
     global ADD_FRIEND
     global FRIEND_REQUEST_ACTION
+    global GET_USERS_LIST
     UPDATE_INFO_SERV = communicators.UpdateInfoServlet()
     GET_FRIENDS_FEED = communicators.FriendsFeedServlet()
     ADD_FRIEND = communicators.AddFriendServlet()
     FRIEND_REQUEST_ACTION = communicators.FriendRequestActionServlet()
+    GET_USERS_LIST = communicators.UsersListServlet()
 
 
 @app.before_first_request
