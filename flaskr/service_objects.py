@@ -10,11 +10,10 @@ from pymongo import MongoClient
 
 import errors
 import logging
-from flaskr.static import send_notification
 
 # Globals
 import svc_utils
-from flaskr.static.send_notification import GCMessage
+from static.send_notification import GCMessage
 from models import user_info
 
 WORD = 'word'
@@ -29,7 +28,8 @@ client = MongoClient('localhost', 27017)
 db = client[DATABASE]
 collection = db[COLLECTION]
 
-# MODEL = Detector()
+ACTION = ['ACCEPT', 'REJECT']
+
 logger = logging.getLogger(__name__)
 
 
@@ -37,6 +37,8 @@ class FriendRequestAction(object):
     def __init__(self, inputData):
         try:
             self.action = inputData['action']
+            if self.action not in ACTION:
+                raise errors.IncorrectRequestData
             self.add_friend = inputData['friend_username']
         except KeyError as e:
             raise errors.IncorrectRequestData
@@ -44,51 +46,65 @@ class FriendRequestAction(object):
     def get(self):
         try:
             friend_request_sendor = collection.find_one({'username': self.add_friend})
+            print self.action == 'ACCEPT', current_user.get_id()
             if None == friend_request_sendor:
                 logger.error("Given username doesn't exist")
-                raise errors.IncorrectRequestData("Username doesn't exist")
-            else:
+                return svc_utils.get_sample_response(True,
+                                                     "Given username doesn't exist",
+                                                     "No such user found",
+                                                     current_user.get_id())
+            elif self.action == "ACCEPT":
                 sent_friend_request = friend_request_sendor['sent_friend_request']
                 if current_user.get_id() in sent_friend_request:
                     collection.update_one({'username': self.add_friend},
                                           {'$pull': {'sent_friend_request': current_user.get_id()},
                                            '$push': {'friends': current_user.get_id()}})
                     collection.update_one({'username': current_user.get_id()},
-                                          {'$push': {'friends': current_user.get_id()}})
+                                          {'$push': {'friends': self.add_friend}})
                     logger.info("Friend request accepted successfully")
-                    doc = collection.find_one({'username': self.add_friend})
-                    if None == doc:
-                        raise errors.IncorrectRequestData
-                    else:
-                        gmc_auth = doc['credentials']['gmc_auth']
+                    gmc_auth = friend_request_sendor['credentials']['gmc']['auth_key']
                     data = {
-                        "to": self.add_friend,
+                        "to": gmc_auth,
                         "data": {
                             "message": str(current_user.get_id()) + " accepted your friend request",
                         }
                     }
-                    gcmessenger = GCMessage(gmc_auth)
+                    gcmessenger = GCMessage()
                     if not gcmessenger.post_request(data):
                         logger.error("Friend request notification not sent")
-                    return svc_utils.get_response_from_dict(svc_utils.get_sample_response(False,
-                                                                                          None,
-                                                                                          "Added to friends",
-                                                                                          current_user.get_id()))
+                    return svc_utils.get_sample_response(False,
+                                                         None,
+                                                         "Added to friends", 
+                                                         current_user.get_id())
                 else:
+                    print "testing checkpoint"
                     logger.error("Invalid username passed")
-                    return svc_utils.get_response_from_dict(svc_utils.get_sample_response(True,
-                                                                                          "Request not found",
-                                                                                          "Request not found",
-                                                                                          current_user.get_id()))
+                    return svc_utils.get_sample_response(True,
+                                                         "Request not found",
+                                                         "Request not found",
+                                                         current_user.get_id())
+            elif self.action == "REJECT":
+                collection.update_one({'username': self.add_friend},
+                                      {'$pull': {'sent_friend_request': current_user.get_id()}})
+                return svc_utils.get_sample_response(False,
+                                                     None,
+                                                     "Request deleted!")
         except Exception as e:
             logger.error("Error while responding to friend request")
-            return errors.SERVER_ERROR
+            return svc_utils.get_sample_response(True,
+                                                 "Failed",
+                                                 "Failed",
+                                                 current_user.get_id())
+        return svc_utils.get_sample_response(True,
+                                             "Failed",
+                                             "Failed",
+                                             current_user.get_id())
 
 
 class AddFriend(object):
     def __init__(self, inputData):
         try:
-            self.add_friend = inputData['friend_username']
+            self.add_friend = inputData['data']['friend_username']
         except KeyError as e:
             raise errors.IncorrectRequestData
 
@@ -97,25 +113,37 @@ class AddFriend(object):
             friend_to_add = collection.find_one({"username": self.add_friend})
             if None == friend_to_add:
                 logger.error("Username to be added doesn't exist")
-                raise errors.IncorrectRequestData("Username to be added doesn't exist")
+                return svc_utils.get_sample_response(True,
+                                                     "Username to be added doesn't exist",
+                                                     "Username to be added doesn't exist",
+                                                     current_user.get_id())
             else:
-                friend_gmc_auth = friend_to_add['credentials']['gmc_auth']
+                friend_gmc_auth = friend_to_add['credentials']['gmc']['auth_key']
             data = {
-                "to": self.add_friend,
+                "to": friend_gmc_auth,
                 "data": {
                     "message": str(current_user.get_id()) + " sent you a friend request",
                 }
             }
-            gcmessenger = GCMessage(friend_gmc_auth)
+            gcmessenger = GCMessage()
             if gcmessenger.post_request(data):
                 collection.update_one({'username': current_user.get_id()},
                                       {'$addToSet': {'sent_friend_request': self.add_friend}})
-                return True
+                return svc_utils.get_sample_response(False,
+                                                     None,
+                                                     "Friend request sent successfully!",
+                                                     current_user.get_id())
             else:
-                raise errors.SERVER_ERROR("Error in sending friend request")
+                return svc_utils.get_sample_response(True,
+                                                     "Error while sending friend request",
+                                                     "Error while sending friend request",
+                                                     current_user.get_id())
         except Exception as e:
             logger.error("Error while sending friend request")
-            raise errors.SERVER_ERROR("Error while sending friend request")
+            return svc_utils.get_sample_response(True,
+                                                 "Error while sending friend request",
+                                                 "Error while sending friend request",
+                                                 current_user.get_id())
 
 
 class FriendsFeed(object):

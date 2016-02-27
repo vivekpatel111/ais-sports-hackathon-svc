@@ -36,6 +36,7 @@ class FriendRequestActionServlet(base_communicator.BaseCommunicator, object):
             handler_inst = handlers.HandlerFactory.get_handler(class_name)
             res_data = handler_inst.get(svc_obj)
         else:
+            print "testing"
             raise errors.CouldNotAuthenticate()
         # Create response object
         resp = super(FriendRequestActionServlet, self).get_response(res_data)

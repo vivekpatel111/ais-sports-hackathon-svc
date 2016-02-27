@@ -61,9 +61,8 @@ def register():
     str_data = urllib.unquote_plus(request.get_data()).decode('utf-8')
     input_data = json.loads(str_data)
     username = input_data.get('username', None)
-    password = input_data.get('password', None)
     try:
-        user_obj = User.register(username, password, collection)
+        user_obj = User.register(input_data, collection)
     except UsernameAlreadyExists as e:
         return svc_utils.get_response_from_dict(get_sample_response(True, e.message, {}, username))
     login_user(user_obj)
@@ -146,9 +145,21 @@ def get_friends_feed():
     logger.info("Recieved request for fetching top n friends feed status by user- %s", current_user.get_id())
 
 
-@app.route('/personal/accRejFriendRequest')
+@app.route('/personal/FriendRequestAction', methods=['POST'])
 @login_required
 def take_action_friend_request():
+    logger.info("Received request for taking action on a friend request. request-%s", request)
+
+    try:
+        response = FRIEND_REQUEST_ACTION.invoke_insert(request)
+    except Exception as e:
+        return svc_utils.get_response_from_dict(
+                svc_utils.get_sample_response(True,
+                                              e.message,
+                                              "Error while acting on friend request",
+                                              current_user.get_id())
+        )
+    return response
 
 
 @app.route('/friend/add', methods=['POST'])

@@ -20,18 +20,23 @@ class User():
         return self.username
 
     @staticmethod
-    def register(username, password, collection):
-        user_doc = collection.find_one({"username": username})
-        if None == username or None == password:
+    def register(input_dict, collection):
+        user_doc = collection.find_one({"username": input_dict['username']})
+        if None == input_dict['username'] or None == input_dict['password']:
             raise errors.RegistrationError("Invalid username or password")
 
         if user_doc:
             raise errors.UsernameAlreadyExists("")
         else:
             try:
-                collection.insert({"username": username,
-                                   "password": generate_password_hash(password)})
-                return User(username)
+                collection.insert({"username": input_dict['username'],
+                                   "password": generate_password_hash(input_dict['password']),
+                                   "credentials": {
+                                       "gmc": {
+                                           "auth_key": input_dict.get('gmc_auth_key', None)
+                                       }
+                                   }})
+                return User(input_dict['username'])
             except Exception:
                 raise errors.RegistrationError("")
 

@@ -34,17 +34,10 @@ class BaseCommunicator:
 
     @abstractmethod
     def get_ip(self, req):
-        """Common functionality of getting ip address from request.
-           Ignoring any security implications this might have for
-           ip address spoofing etc.
-           Note: Current method works when Gunicorn+Flask is used
-           without any reverse proxy. Different method might be
-           needed when reverse proxy is used"""
         return req.access_route[0]
 
     @abstractmethod
     def check_auth(self, input_data, req):
-        """Common functionality of auth checking needed for all servlets"""
         if AUTH_ENABLED:
             if APP_NAME in input_data:
                 app_name = input_data[APP_NAME]
@@ -81,17 +74,14 @@ class BaseCommunicator:
 
     @abstractmethod
     def get_response(self, response):
-        """Common functionality of marshalling and creating response"""
         return Response(json.dumps(response),
                         status=OK_RESPONSE,
                         mimetype='application/json')
 
     @abstractmethod
     def invoke_fetch(self, request):
-        """Concrete classes should provide invoke_fetch method"""
         pass
 
     @abstractmethod
     def invoke_insert(self, request):
-        "Concrete classes should provide invoke_insert method"""
         pass

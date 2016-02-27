@@ -21,4 +21,5 @@ def get_sample_response(err_b, err_m, response, username=None):
     resp[response_objects.RESP_ERROR_MSG_KEY] = err_m
     resp[response_objects.RESP_RES_KEY] = response
     resp[response_objects.RESP_USER_KEY] = username
+    print resp
     return resp
