@@ -173,13 +173,15 @@ def get_weekly_avg_load(ts, date):
     Returns:
         daily avg load for the past week
     """
-    try:
-        avg_load = ts[ts["date"] == date]["4_week_avg"].values[0]
-    except Exception:
-        try:
-            avg_load = ts[ts["date"] == date]["3_week_avg"].values[0]
-        except Exception:
-            avg_load = ts[ts["date"] == date]["2_week_avg"].values[0]
+    ts = ts.fillna(0)
+    avg_load = ts[ts["date"] == date]["4_week_avg"].values[0]
+    if avg_load == 0:
+        avg_load = ts[ts["date"] == date]["3_week_avg"].values[0]
+    if avg_load == 0:
+        avg_load = ts[ts["date"] == date]["2_week_avg"].values[0]
+    if avg_load == 0:
+        avg_load = ts[ts["date"] == date]["weekly_avg"].values[0]
+
     return avg_load
 
 
@@ -242,13 +244,9 @@ def test_check_goal(date, weekly_goal):
 
 def test_suggest_exercises(date, weekly_goal, fav_activity):
     """Test for exercise suggestions."""
-    # df = read_input_data()
-    # ts = create_time_series(df)
-    # ts = feature_engineer(ts, df)
-    df = read_input_data_secondary("/home/utkarsh.jain/Code/Hackathon/Sports/sportsHack/data/data_files/siddhant.csv")
+    df = read_input_data()
     ts = create_time_series(df)
     ts = feature_engineer(ts, df)
-
     return suggest_exercises(ts, date, weekly_goal, fav_activity)
 
 def test_create_time_series_secondary(file):
