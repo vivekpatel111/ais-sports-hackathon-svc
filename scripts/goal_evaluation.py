@@ -4,12 +4,25 @@ import pandas as pd
 from datetime import datetime, timedelta
 import json
 
+
 def read_input_data():
     """Converts input csv file to pandas dataframe."""
     df = pd.read_csv("../data/training_load_data.csv", skiprows=1,
                      names=["date", "status", "session_time", "type",
                             "duration", "rpe", "session_load"],
                      parse_dates=["date"])
+    return df
+
+
+def read_input_data_secondary(file):
+    """Converts input csv file to pandas dataframe."""
+    df = pd.read_csv(file, skiprows=1,
+                     names=["date", "status", "session_time", "type",
+                            "duration", "rpe", "session_load", "month"],
+                     parse_dates=["date"])
+    max_date = max(df.date)
+    days_diff = (datetime(2016, 2, 27) - max_date).days
+    df.date = pd.DatetimeIndex(df.date) + pd.DateOffset(days=days_diff)
     return df
 
 
@@ -27,7 +40,6 @@ def create_time_series(df):
     grouped_df = df.groupby("date")
     ts = grouped_df["session_load"].agg(np.sum)
     ts = pd.DataFrame(data={"date": ts.index, "session_load": ts.values})
-    # offset date
     return ts
 
 
@@ -161,7 +173,14 @@ def get_weekly_avg_load(ts, date):
     Returns:
         daily avg load for the past week
     """
-    return ts[ts["date"] == date]["4_week_avg"].values[0]
+    try:
+        avg_load = ts[ts["date"] == date]["4_week_avg"].values[0]
+    except Exception:
+        try:
+            avg_load = ts[ts["date"] == date]["3_week_avg"].values[0]
+        except Exception:
+            avg_load = ts[ts["date"] == date]["2_week_avg"].values[0]
+    return avg_load
 
 
 def suggest_exercises(ts, date, weekly_goal, fav_activity):
@@ -176,11 +195,13 @@ def suggest_exercises(ts, date, weekly_goal, fav_activity):
     """
     # strategy: suggest one (or two) days for running or swimming
     avg_load = get_weekly_avg_load(ts, date)
+    print avg_load
     with open("../data/goal_intensity_mapping.json", "r") as f:
         intensity = json.load(f)
     activities = intensity.keys()
     # select a side activity randomly
     side_activity = random.choice(list(set(activities) - set(fav_activity)))
+    print side_activity
     # aim for 10% increase on avg load
     side_activity_duration = avg_load*1.1/intensity[side_activity]
     # one day is rest day, ideally the third day
@@ -221,10 +242,20 @@ def test_check_goal(date, weekly_goal):
 
 def test_suggest_exercises(date, weekly_goal, fav_activity):
     """Test for exercise suggestions."""
-    df = read_input_data()
+    # df = read_input_data()
+    # ts = create_time_series(df)
+    # ts = feature_engineer(ts, df)
+    df = read_input_data_secondary("/home/utkarsh.jain/Code/Hackathon/Sports/sportsHack/data/data_files/siddhant.csv")
     ts = create_time_series(df)
     ts = feature_engineer(ts, df)
+
     return suggest_exercises(ts, date, weekly_goal, fav_activity)
+
+def test_create_time_series_secondary(file):
+    df = read_input_data_secondary(file)
+    ts = create_time_series(df)
+    ts = feature_engineer(ts, df)
+    print ts
 
 
 if __name__ == "__main__":
@@ -234,4 +265,5 @@ if __name__ == "__main__":
     weekly_goal = 16500
     fav_activity = "cycling"
     print test_check_goal(date, weekly_goal)
-    print test_suggest_exercises(date, weekly_goal, fav_activity)
+    print json.dumps(test_suggest_exercises(date, weekly_goal, fav_activity), indent=4, sort_keys=True)
+    #print test_create_time_series_secondary("/home/utkarsh.jain/Code/Hackathon/Sports/sportsHack/data/data_files/vivek.csv")
