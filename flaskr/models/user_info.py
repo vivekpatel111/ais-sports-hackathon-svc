@@ -37,7 +37,8 @@ user_info_structure = {
     "diseases": None,
     "location": LOCATION_OBJECT,
     "goal": None,
-    "term_accpeptance": None  # Boolean
+    "term_accpeptance": None,  # Boolean,
+    "metric_file_path": None
 }
 
 WEIGHT_UNITS = ["pound",
