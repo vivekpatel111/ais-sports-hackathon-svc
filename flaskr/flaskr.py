@@ -161,6 +161,7 @@ def take_action_friend_request():
         )
     return response
 
+
 @app.route('/personal/GetUsersList', methods=['POST', 'GET'])
 @login_required
 def get_users_list():
@@ -192,6 +193,21 @@ def add_friend():
     return response
 
 
+@app.route('/friend/compareWithFriend', methods=['POST', "GET"])
+@login_required
+def get_comparison_with_firends():
+    logger.info("Received request")
+    try:
+        response = FRIEND_COMPARISON.invoke_insert(request)
+    except Exception as e:
+        return svc_utils.get_response_from_dict(svc_utils.get_sample_response(True,
+                                                                              "Failed",
+                                                                              "Failed",
+                                                                              current_user.get_id())
+                                                )
+    return response
+
+
 def configure_logging():
     """Sets up logging configuration. It is assumed that the logging
     configuration is provided in configuration file. If the logging config file
@@ -216,11 +232,13 @@ def register_servlets():
     global ADD_FRIEND
     global FRIEND_REQUEST_ACTION
     global GET_USERS_LIST
+    global FRIEND_COMPARISON
     UPDATE_INFO_SERV = communicators.UpdateInfoServlet()
     GET_FRIENDS_FEED = communicators.FriendsFeedServlet()
     ADD_FRIEND = communicators.AddFriendServlet()
     FRIEND_REQUEST_ACTION = communicators.FriendRequestActionServlet()
     GET_USERS_LIST = communicators.UsersListServlet()
+    FRIEND_COMPARISON = communicators.ComparisonWithFriendsServlet()
 
 
 @app.before_first_request
