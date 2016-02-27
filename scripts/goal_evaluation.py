@@ -4,17 +4,12 @@ import pandas as pd
 from datetime import datetime, timedelta
 import json
 
-def read_input_data(file):
+def read_input_data():
     """Converts input csv file to pandas dataframe."""
-    # df = pd.read_csv("../data/training_load_data.csv", skiprows=1,
-    #                  names=["date", "status", "session_time", "type",
-    #                         "duration", "rpe", "session_load"],
-    #                  parse_dates=["date"])
-    df = pd.read_csv(file, skiprows=1,
+    df = pd.read_csv("../data/training_load_data.csv", skiprows=1,
                      names=["date", "status", "session_time", "type",
                             "duration", "rpe", "session_load"],
                      parse_dates=["date"])
-
     return df
 
 
@@ -33,7 +28,6 @@ def create_time_series(df):
     ts = grouped_df["session_load"].agg(np.sum)
     ts = pd.DataFrame(data={"date": ts.index, "session_load": ts.values})
     # offset date
-    ts["date"] = pd.DatetimeIndex(ts["date"]) + pd.DateOffset(days=446)
     return ts
 
 
@@ -218,12 +212,11 @@ def test_check_goal(date, weekly_goal):
     Returns:
         Moderate, moderately aggressive or aggressive.
     """
-    df = read_input_data("../data/training_load_data.csv")
-    
-    # ts = create_time_series(df)
-    # # feature engineer
-    # ts = feature_engineer(ts, df)
-    # return check_goal(ts, date, weekly_goal)
+    df = read_input_data()
+    ts = create_time_series(df)
+    # feature engineer
+    ts = feature_engineer(ts, df)
+    return check_goal(ts, date, weekly_goal)
 
 
 def test_suggest_exercises(date, weekly_goal, fav_activity):
