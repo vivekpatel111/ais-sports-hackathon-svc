@@ -1,5 +1,7 @@
 from pymongo import MongoClient
 import sys
+import numpy as np
+import operator
 
 sys.path.append("../../../")
 import goal_evaluation
@@ -19,22 +21,53 @@ def get_top_n_performers(users, days=29):
     for user in users:
         user_doc = collection.find_one({"username": user})
         metric_file_path = user_doc['metric_file_path']
-        print metric_file_path
-        df = goal_evaluation.read_input_data(metric_file_path)
+        df = goal_evaluation.read_input_data_secondary(metric_file_path)
         ts = goal_evaluation.create_time_series(df)
         ts_featured = goal_evaluation.feature_engineer(ts, df)
-        user_score = ts_featured['4_week_avg'][-1]
+        user_score = ts_featured['2_week_avg'][-1:].values
+        ts_featured['2_week_avg']
+        if np.isnan(user_score[0]):
+            user_score = 0
+        else:
+            user_score = user_score[0]
         user_score_dict[user] = user_score
-    return user_score_dict
+    sorted_x = sorted(user_score_dict.items(), key=operator.itemgetter(1))
+    return sorted_x[-3:]
+
+
+def get_bottom_performers(users):
+    user_score_dict = {}
+    for user in users:
+        user_doc = collection.find_one({"username": user})
+        metric_file_path = user_doc['metric_file_path']
+        df = goal_evaluation.read_input_data_secondary(metric_file_path)
+        ts = goal_evaluation.create_time_series(df)
+        ts_featured = goal_evaluation.feature_engineer(ts, df)
+        user_score = ts_featured['3_day_avg'][-1:].values
+        if np.isnan(user_score[0]):
+            user_score = 0
+        else:
+            user_score = user_score[0]
+        user_score_dict[user] = user_score
+    sorted_x = sorted(user_score_dict.items(), key=operator.itemgetter(1))
+    return sorted_x[:2]
 
 
 def compare_friends(user, friends):
-    top_n_performers = get_top_n_performers(friends + user, 29)
+    top_n_performers_list = get_top_n_performers(friends + [user], 29)
+    bottom_2_performers = get_bottom_performers(friends + [user])
+    final_top_3 = []
+    for user in top_n_performers_list:
+        if user[0] not in dict(bottom_2_performers):
+            final_top_3.append(user)
+    return {'top': final_top_3,
+            'bottom': bottom_2_performers}
 
 
 def main():
-    users = ['utkarsh', 'siddhanth']
-    print get_top_n_performers(users, 30)
+    users = ['utkarsh', 'vivek', 'siddhant', 'kunal', 'himanshu', 'abhishek']
+    compare_friends('utkarsh', ['vivek', 'siddhant', 'kunal', 'himanshu', 'abhishek'])
+    # print get_top_n_performers(users, 30)
 
 
 if __name__ == '__main__':

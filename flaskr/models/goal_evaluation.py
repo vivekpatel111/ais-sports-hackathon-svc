@@ -2,15 +2,20 @@ import numpy as np
 import pandas as pd
 from datetime import datetime, timedelta
 
+
 def read_input_data(file):
     """Converts input csv file to pandas dataframe."""
-    # df = pd.read_csv("../data/training_load_data.csv", skiprows=1,
-    #                  names=["date", "status", "session_time", "type",
-    #                         "duration", "rpe", "session_load"],
-    #                  parse_dates=["date"])
-    df = pd.read_csv(file, skiprows=1,
+    df = pd.read_csv("../data/training_load_data.csv", skiprows=1,
                      names=["date", "status", "session_time", "type",
                             "duration", "rpe", "session_load"],
+                     parse_dates=["date"])
+    return df
+
+
+def read_input_data_secondary(file):
+    df = pd.read_csv(file, skiprows=1,
+                     names=["date", "status", "session_time", "type",
+                            "duration", "rpe", "session_load", "month"],
                      parse_dates=["date"])
 
     return df
@@ -103,7 +108,7 @@ def feature_engineer(ts, df):
     ts["sick"] = ts["date"].apply(lambda x: int(is_sick(df, x)))
     ts["injured"] = ts["date"].apply(lambda x: int(is_injured(df, x)))
     # acute:chronic load ratio
-    ts.loc[:, "w14"] = ts["weekly_avg"]/ts["4_week_avg"]
+    ts.loc[:, "w14"] = ts["weekly_avg"] / ts["4_week_avg"]
     return ts
 
 
@@ -120,10 +125,10 @@ def check_goal(ts, date, weekly_goal):
     """
     # assess risk of injury for goal set, i.e. find optimal range for training
     four_week_avg = ts[ts["date"] == date]["4_week_avg"].values[0]
-    daily_goal = weekly_goal/7.0
+    daily_goal = weekly_goal / 7.0
     min_load = four_week_avg * 0.8
-    moderate_load_threshold = four_week_avg*1.25
-    aggressive_threshold = four_week_avg*1.5
+    moderate_load_threshold = four_week_avg * 1.25
+    aggressive_threshold = four_week_avg * 1.5
     max_load = four_week_avg * 1.5
     # TODO: if sick the previous day, change the recommendation. Recommend no
     # more than 10% of the average training load.

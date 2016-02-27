@@ -4,12 +4,17 @@ import pandas as pd
 from datetime import datetime, timedelta
 import json
 
-def read_input_data():
+def read_input_data(file):
     """Converts input csv file to pandas dataframe."""
-    df = pd.read_csv("../data/training_load_data.csv", skiprows=1,
+    # df = pd.read_csv("../data/training_load_data.csv", skiprows=1,
+    #                  names=["date", "status", "session_time", "type",
+    #                         "duration", "rpe", "session_load"],
+    #                  parse_dates=["date"])
+    df = pd.read_csv(file, skiprows=1,
                      names=["date", "status", "session_time", "type",
                             "duration", "rpe", "session_load"],
                      parse_dates=["date"])
+
     return df
 
 
@@ -90,6 +95,8 @@ def feature_engineer(ts, df):
         the same dataframe with engineered features added
     """
     # compute rolling averages
+    ts.loc[:, "last_day_avg"] = pd.rolling_mean(ts["session_load"], 1)
+    ts.loc[:, "3_day_avg"] = pd.rolling_mean(ts["session_load"], 3)
     ts.loc[:, "weekly_avg"] = pd.rolling_mean(ts["session_load"], 7)
     ts.loc[:, "2_week_avg"] = pd.rolling_mean(ts["session_load"], 14)
     ts.loc[:, "3_week_avg"] = pd.rolling_mean(ts["session_load"], 21)
@@ -211,11 +218,12 @@ def test_check_goal(date, weekly_goal):
     Returns:
         Moderate, moderately aggressive or aggressive.
     """
-    df = read_input_data()
-    ts = create_time_series(df)
-    # feature engineer
-    ts = feature_engineer(ts, df)
-    return check_goal(ts, date, weekly_goal)
+    df = read_input_data("../data/training_load_data.csv")
+    
+    # ts = create_time_series(df)
+    # # feature engineer
+    # ts = feature_engineer(ts, df)
+    # return check_goal(ts, date, weekly_goal)
 
 
 def test_suggest_exercises(date, weekly_goal, fav_activity):
