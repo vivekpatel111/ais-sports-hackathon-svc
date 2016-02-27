@@ -63,6 +63,14 @@ class UsersList(Handler, object):
         result = svc_obj.get()
         return result
 
+class UserFeed(Handler, object):
+    def __init__(self):
+        LOGGER.debug("Initialized UserFeed handler")
+
+    def get(self, svc_obj):
+        result = svc_obj.get()
+        return result
+
 
 class ComparisonWithFriends(Handler, object):
     def __init__(self):
@@ -83,7 +91,8 @@ class HandlerFactory(object):
         'add_friend': AddFriend(),
         'friend_request_action': FriendRequestAction(),
         'get_users_list': UsersList(),
-        'comparison_with_friends': ComparisonWithFriends()
+        'comparison_with_friends': ComparisonWithFriends(),
+        'user_feed':UserFeed()
     }
 
     @staticmethod
@@ -98,3 +107,5 @@ class HandlerFactory(object):
             return HandlerFactory.all_handlers['get_users_list']
         elif name == 'ComparisonWithFriends':
             return HandlerFactory.all_handlers['comparison_with_friends']
+        elif name == 'UserFeed':
+            return HandlerFactory.all_handlers['user_feed']

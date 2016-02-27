@@ -29,11 +29,11 @@ COLLECTION = 'users'
 client = MongoClient('localhost', 27017)
 db = client[DATABASE]
 collection = db[COLLECTION]
+activity_collection = db['activities']
 
 ACTION = ['ACCEPT', 'REJECT']
 
 logger = logging.getLogger(__name__)
-
 
 class ComparisonWithFriends(object):
     def __init__(self, input_data):
@@ -57,6 +57,52 @@ class ComparisonWithFriends(object):
         response_data = computation.compare_friends(current_user.get_id(),
                                                     friends_with_same_goal)
 
+class UserFeed(object):
+    def __init__(self, input_data):
+        try:
+            self.filter = input_data.get('filter')
+            self.activity = input_data.get('activity')
+        except KeyError as e:
+            raise errors.IncorrectRequestData
+    def get(self):
+
+        if self.filter != None:
+            try:
+                query = {'username':current_user.get_id().encode('ascii','ignore')}
+                if self.filter.get('endTime') != None:
+                    query['endTime'] = {'$lt':self.filter.get('endTime')}
+                if self.filter.get('startTime') != None:
+                    query['startTime'] = {'$gt':self.filter.get('startTime')}
+                if self.filter.get('activity') != None:
+                    query['activity'] = self.filter.get('activity')
+                activity_list_doc = activity_collection.find(query)
+                activity_list = []
+                for doc in activity_list_doc:
+                    doc_copy = doc.copy()
+                    doc_copy['_id'] = str(doc_copy.get("_id"))
+                    activity_list.append(doc_copy)
+                return svc_utils.get_sample_response(False,
+                                                     None,
+                                                     {'activity_list': activity_list},
+                                                      current_user.get_id()
+                                                     )
+
+            except Exception as e:
+                return svc_utils.get_sample_response(True,
+                                                     "Error while fetching Activities1",
+                                                     {'usersList': None},
+                                                     current_user.get_id()
+                                                     )
+        if self.activity != None:
+            if self.activity.get('_id') == None:
+                activity_collection.insert(self.activity)
+                activity_copy = self.activity.copy()
+                activity_copy['_id'] = str(activity_copy.get("_id"))
+                return svc_utils.get_sample_response(False,
+                                                     None,
+                                                     {'activity': activity_copy},
+                                                      current_user.get_id()
+                                                     )
 
 
 class UsersList(object):

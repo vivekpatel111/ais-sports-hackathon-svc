@@ -139,11 +139,18 @@ def update_user_info():
     return response
 
 
-@app.route('/personal/friendsFeed', methods=['POST'])
+@app.route('/personal/activity', methods=['POST'])
 @login_required
-def get_friends_feed():
-    logger.info("Recieved request for fetching top n friends feed status by user- %s", current_user.get_id())
-
+def handle_activities():
+    logger.info("Recieved request for fetching activities %s", current_user.get_id())
+    try:
+        response = GET_USER_FEED.invoke_insert(request)
+    except Exception as e:
+        return svc_utils.get_response_from_dict(svc_utils.get_sample_response(True,
+                                                                              e.message,
+                                                                              "Error while fetching activities",
+                                                                              current_user.get_id()))
+    return response
 
 @app.route('/personal/FriendRequestAction', methods=['POST'])
 @login_required
@@ -233,12 +240,15 @@ def register_servlets():
     global FRIEND_REQUEST_ACTION
     global GET_USERS_LIST
     global FRIEND_COMPARISON
+    global GET_USER_FEED
+
     UPDATE_INFO_SERV = communicators.UpdateInfoServlet()
     GET_FRIENDS_FEED = communicators.FriendsFeedServlet()
     ADD_FRIEND = communicators.AddFriendServlet()
     FRIEND_REQUEST_ACTION = communicators.FriendRequestActionServlet()
     GET_USERS_LIST = communicators.UsersListServlet()
     FRIEND_COMPARISON = communicators.ComparisonWithFriendsServlet()
+    GET_USER_FEED = communicators.UserFeedServlet()
 
 
 @app.before_first_request
