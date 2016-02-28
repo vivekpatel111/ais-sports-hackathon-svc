@@ -40,22 +40,20 @@ class ComparisonWithFriends(object):
         self.input_data = input_data
 
     def get(self):
-        user_doc = collection.findOne({'username': current_user.get_id()})
+        user_doc = collection.find_one({'username': current_user.get_id()})
         goal = user_doc['goal']
         if not goal:
-            return svc_utils.get_response_from_dict(svc_utils.get_sample_response(False,
-                                                                                  None,
-                                                                                  [],
-                                                                                  current_user.get_id()))
+            raise errors.SERVER_ERROR
         friends = user_doc['friends']
         friends_with_same_goal = []
         for friend in friends:
-            friend_doc = collection.findOne({'username': friend})
+            friend_doc = collection.find_one({'username': friend})
             if not friend_doc or friend_doc.get('goal', None) != goal:
                 continue
             friends_with_same_goal.append(friend_doc['username'])
         response_data = computation.compare_friends(current_user.get_id(),
                                                     friends_with_same_goal)
+        return response_data
 
 class UserFeed(object):
     def __init__(self, input_data):

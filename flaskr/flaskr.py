@@ -208,7 +208,7 @@ def get_comparison_with_firends():
         response = FRIEND_COMPARISON.invoke_insert(request)
     except Exception as e:
         return svc_utils.get_response_from_dict(svc_utils.get_sample_response(True,
-                                                                              "Failed",
+                                                                              e.message,
                                                                               "Failed",
                                                                               current_user.get_id())
                                                 )

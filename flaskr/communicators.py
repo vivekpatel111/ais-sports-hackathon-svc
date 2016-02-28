@@ -32,7 +32,8 @@ class ComparisonWithFriendsServlet(base_communicator.BaseCommunicator, object):
             # First create a service object for this
             self_name = self.__class__.__name__
             class_name = self_name.replace("Servlet", "")
-            if request_data['type'] == 'ComparisonWithFriendsServlet':
+            svc_obj = None
+            if request_data['type'] == 'ComparisonWithFriends':
                 svc_obj = service_objects.ComparisonWithFriends(request_data)
             handler_inst = handlers.HandlerFactory.get_handler(class_name)
             res_data = handler_inst.get(svc_obj)
