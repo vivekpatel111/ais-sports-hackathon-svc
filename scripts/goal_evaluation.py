@@ -197,28 +197,27 @@ def suggest_exercises(ts, date, weekly_goal, fav_activity):
     """
     # strategy: suggest one (or two) days for running or swimming
     avg_load = get_weekly_avg_load(ts, date)
-    print avg_load
     with open("../data/goal_intensity_mapping.json", "r") as f:
         intensity = json.load(f)
     activities = intensity.keys()
     # select a side activity randomly
     side_activity = random.choice(list(set(activities) - set(fav_activity)))
-    print side_activity
     # aim for 10% increase on avg load
-    side_activity_duration = avg_load*1.1/intensity[side_activity]
+    side_activity_duration = avg_load*1.1/intensity[side_activity] + \
+        random.uniform(-20, 20)
     # one day is rest day, ideally the third day
     regular_activity_load = (weekly_goal - avg_load*1.1)/5
     # below becomes a suggestion
     regular_activity_duration = regular_activity_load/intensity[fav_activity]
     # send the recommendation
     reco = {
-        "day 1": {"activity": fav_activity, "duration": regular_activity_duration},
+        "day 1": {"activity": fav_activity, "duration": regular_activity_duration + random.uniform(-20, 20)},
         "day 2": {"activity": side_activity, "duration": side_activity_duration},
-        "day 3": {"activity": fav_activity, "duration": regular_activity_duration},
+        "day 3": {"activity": fav_activity, "duration": regular_activity_duration + random.uniform(-20, 20)},
         "day 4": {"activity": "rest", "duration": 0},
-        "day 5": {"activity": fav_activity, "duration": regular_activity_duration},
-        "day 6": {"activity": fav_activity, "duration": regular_activity_duration},
-        "day 7": {"activity": fav_activity, "duration": regular_activity_duration},
+        "day 5": {"activity": fav_activity, "duration": regular_activity_duration + random.uniform(-20, 20)},
+        "day 6": {"activity": fav_activity, "duration": regular_activity_duration + random.uniform(-20, 20)},
+        "day 7": {"activity": fav_activity, "duration": regular_activity_duration + random.uniform(-20, 20)},
     }
     return reco
 
