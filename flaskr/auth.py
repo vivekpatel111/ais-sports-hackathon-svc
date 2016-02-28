@@ -1,10 +1,3 @@
-"""This module implements support for App+Ip authentication.
-   For a given App Name and IP address, it checks in the list of
-   dictionary maintained within the same class. For simplicity, we
-   are maintaining a variable within the same file, it will
-   eventually move to a DB"""
-
-# Imports
 import json
 import logging
 

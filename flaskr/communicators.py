@@ -1,7 +1,3 @@
-"""Concrete implementations of communicators for various API endpoints. These
-   are equivalent to servlets in Java"""
-
-# imports
 import base_communicator
 import handlers
 import errors
@@ -35,6 +31,8 @@ class ComparisonWithFriendsServlet(base_communicator.BaseCommunicator, object):
             svc_obj = None
             if request_data['type'] == 'ComparisonWithFriends':
                 svc_obj = service_objects.ComparisonWithFriends(request_data)
+            elif request_data['type'] == 'getDailySuggestion':
+                svc_obj = service_objects.GetDailySuggestion()
             handler_inst = handlers.HandlerFactory.get_handler(class_name)
             res_data = handler_inst.get(svc_obj)
         else:
@@ -182,9 +180,6 @@ class FriendsFeedServlet(base_communicator.BaseCommunicator, object):
 
 
 class UpdateInfoServlet(base_communicator.BaseCommunicator, object):
-    """Servelet
-    """
-
     def __init__(self):
         """
         Calls init of super class
@@ -217,9 +212,6 @@ class UpdateInfoServlet(base_communicator.BaseCommunicator, object):
         return resp
 
 class UserFeedServlet(base_communicator.BaseCommunicator, object):
-    """Servelet
-    """
-
     def __init__(self):
         """
         Calls init of super class

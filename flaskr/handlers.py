@@ -1,10 +1,3 @@
-""" Handlers
-
-  This module implements the actual handler classes.
-  Implements thin wrappers over service objects
-
-"""
-
 # Imports
 from abc import ABCMeta, abstractmethod
 import logging

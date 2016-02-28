@@ -1,9 +1,3 @@
-"""This module defines service objects for various API endpoints for tagging
-   service"""
-
-# Imports
-
-# from model import Detector
 import pymongo
 from flask_login import current_user
 from pymongo import MongoClient
@@ -35,6 +29,23 @@ ACTION = ['ACCEPT', 'REJECT']
 
 logger = logging.getLogger(__name__)
 
+
+class GetDailySuggestion(object):
+    def __init__(self):
+        pass
+
+    def get(self):
+        user_doc = collection.find_one({'username': current_user.get_id()})
+        try:
+            suggestion = user_doc["weekly_suggestion"]
+        except KeyError as k:
+            raise errors.SERVER_ERROR
+        return svc_utils.get_sample_response(False,
+                                             None,
+                                             suggestion,
+                                             current_user.get_id())
+
+
 class ComparisonWithFriends(object):
     def __init__(self, input_data):
         self.input_data = input_data
@@ -55,6 +66,7 @@ class ComparisonWithFriends(object):
                                                     friends_with_same_goal)
         return response_data
 
+
 class UserFeed(object):
     def __init__(self, input_data):
         try:
@@ -62,15 +74,16 @@ class UserFeed(object):
             self.activity = input_data.get('activity')
         except KeyError as e:
             raise errors.IncorrectRequestData
+
     def get(self):
 
         if self.filter != None:
             try:
-                query = {'username':current_user.get_id().encode('ascii','ignore')}
+                query = {'username': current_user.get_id().encode('ascii', 'ignore')}
                 if self.filter.get('endTime') != None:
-                    query['endTime'] = {'$lt':self.filter.get('endTime')}
+                    query['endTime'] = {'$lt': self.filter.get('endTime')}
                 if self.filter.get('startTime') != None:
-                    query['startTime'] = {'$gt':self.filter.get('startTime')}
+                    query['startTime'] = {'$gt': self.filter.get('startTime')}
                 if self.filter.get('activity') != None:
                     query['activity'] = self.filter.get('activity')
                 activity_list_doc = activity_collection.find(query)
@@ -82,7 +95,7 @@ class UserFeed(object):
                 return svc_utils.get_sample_response(False,
                                                      None,
                                                      {'activity_list': activity_list},
-                                                      current_user.get_id()
+                                                     current_user.get_id()
                                                      )
 
             except Exception as e:
@@ -99,7 +112,7 @@ class UserFeed(object):
                 return svc_utils.get_sample_response(False,
                                                      None,
                                                      {'activity': activity_copy},
-                                                      current_user.get_id()
+                                                     current_user.get_id()
                                                      )
 
 
@@ -134,6 +147,7 @@ class UsersList(object):
                                                  {'usersList': None},
                                                  current_user.get_id()
                                                  )
+
 
 class FriendRequestAction(object):
     def __init__(self, inputData):
@@ -205,6 +219,7 @@ class FriendRequestAction(object):
                                              "Failed",
                                              current_user.get_id())
 
+
 class AddFriend(object):
     def __init__(self, inputData):
         try:
@@ -251,6 +266,7 @@ class AddFriend(object):
                                                  "Error while sending friend request",
                                                  current_user.get_id())
 
+
 class FriendsFeed(object):
     def __init__(self, inputData):
         """Expects input_data to be a map containing required keys."""
@@ -266,6 +282,7 @@ class FriendsFeed(object):
             logger.error("Input data does not have correct attributes")
             logger.error("%s", err)
             raise errors.IncorrectRequestData()
+
 
 class UpdateInfo(object):
     def __init__(self, inputData):

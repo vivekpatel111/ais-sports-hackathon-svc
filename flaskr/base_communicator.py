@@ -1,8 +1,3 @@
-"""Base implementation for talking through REST. It expects the input
-   data to be json serialized"""
-
-# imports
-
 import auth
 import json
 from flask import Response
@@ -38,21 +33,8 @@ class BaseCommunicator:
 
     @abstractmethod
     def check_auth(self, input_data, req):
-        if AUTH_ENABLED:
-            if APP_NAME in input_data:
-                app_name = input_data[APP_NAME]
-            else:
-                logger.error("Application name must be present")
-                raise errors.IncorrectRequestData()
-            ip_adr = self.get_ip(req)
-            logger.debug("The application name is %s", app_name)
-            logger.debug("The IP address of client is %s", ip_adr)
-            auth_res = self.auth.check_auth(app_name, ip_adr)
-            if not auth_res:
-                logger.warn("Attempted unauthenticated call from %s", ip_adr)
-            return auth_res
-        else:
-            return True
+        # TODO
+        return True
 
     @abstractmethod
     def get_request_data(self, req):
